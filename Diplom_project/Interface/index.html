@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Map Earthquaqes</title>
+    <style>
+  .buttonContainer {
+    display: flex;
+    flex-wrap: wrap;
+    width: 300px;
+  }
+
+  .buttonContainer input[type="submit"] {
+    flex: 0 0 50%;
+    margin-bottom: 10px;
+  }
+
+    .firstButton {
+        margin-right: 10px;
+    }
+        body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        background-color: #f2f2f2;
+    }
+
+    h1 {
+        font-size: 24px;
+        color: #008080;
+    }
+
+    p {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    
+    select {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+
+    input[type="submit"] {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        padding: 8px 16px;
+        background-color: #008080;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    #map {
+        position: absolute;
+        top: 0;
+        right: 10px;
+        width: 80%;
+        height: 850px;
+    }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYqbWB_4JQ4LliSfIQuQGgAXUqiFLVs94&callback=initMap&language=uk" async defer></script>
+    <script>
+      function initMap() {
+        const latitudeInput = document.querySelector('#latitudeInput');
+        const longitudeInput = document.querySelector('#longitudeInput');
+        const radiusInput = document.querySelector('#radiusInput');
+        const countrySelect = document.querySelector('#countrySelect');
+
+        const mapOptions = {
+          center: { lat: 0, lng: 0 },
+          zoom: 10
+        };
+        const map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        let circle = null;
+        let marker = null;
+
+        function updateMap() {
+          const latitude = parseFloat(latitudeInput.value);
+          const longitude = parseFloat(longitudeInput.value);
+          const radius = parseFloat(radiusInput.value);
+
+          if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(radius)) {
+            if (marker) {
+              marker.setMap(null);
+            }
+
+            if (circle) {
+              circle.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+              position: { lat: latitude, lng: longitude },
+              map: map
+            });
+            map.setCenter({ lat: latitude, lng: longitude });
+
+            circle = new google.maps.Circle({
+              strokeColor: "#FF0000",
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: "#FF0000",
+              fillOpacity: 0.35,
+              map: map,
+              center: { lat: latitude, lng: longitude },
+              radius: radius
+            });
+          }
+        }
+
+        function updateCoordinates() {
+  const selectedCountry = countrySelect.value;
+
+  switch (selectedCountry) {
+    case "japan":
+      latitudeInput.value = "35.6895";
+      longitudeInput.value = "139.6917";
+      break;
+    case "turkey":
+      latitudeInput.value = "41.0082";
+      longitudeInput.value = "28.9784";
+      break;
+    case "china":
+      latitudeInput.value = "39.9042";
+      longitudeInput.value = "116.4074";
+      break;
+    case "australia":
+      latitudeInput.value = "-25.2744";
+      longitudeInput.value = "133.7751";
+      break;
+    case "korea":
+      latitudeInput.value = "37.5665";
+      longitudeInput.value = "126.9780";
+      break;
+    case "philippines":
+      latitudeInput.value = "13.4125";
+      longitudeInput.value = "122.5635";
+      break;
+    default:
+      latitudeInput.value = "";
+      longitudeInput.value = "";
+      break;
+  }
+}
+        const submitButton = document.querySelector('input[type="submit"]');
+        submitButton.addEventListener('click', updateMap);
+
+        countrySelect.addEventListener('change', updateCoordinates);
+      }
+    </script>
+  </head>
+  <body>
+    <div>
+      Оберіть із запропонованих країн:<br>
+      <select id="countrySelect">
+        <option value="">Оберіть країну</option>
+        <option value="japan">Японія</option>
+        <option value="turkey">Турція</option>
+        <option value="china">Китай</option>
+        <option value="australia">Австралія</option>
+        <option value="korea">Корея</option>
+        <option value="philippines">Філіппіни</option>
+      </select>
+      <br><br>
+      Або введіть свої координати країн:<br><br>
+      Координати (Широта):<br>
+      <input type="text" name="inputLong" id="latitudeInput" placeholder="***." value="">
+      <br>
+      Координати (Довгота):<br>
+      <input type="text" name="inputLat" id="longitudeInput" placeholder=".**" value="">
+      <br>
+      Радіус (метри):<br>
+      <input type="text" name="radius" id="radiusInput" placeholder="Радіус" value="">
+      <br>
+      <br><br>
+      <div class="buttonContainer">
+        <input type="submit" value="Вказати країну" onclick="showSecondButton()" class="firstButton">
+        <input type="submit" value="Наявні станції" onclick="displayMarkers()" id="third">
+        <input type="submit" value="Знайти станцію" onclick="findClosestStation()" id="forth">
+        <input type="submit" value="Сформувати" onclick="collectFormData()" id="form">
+      </div>
+      <div id="station-info"></div>
+      <div id="map"></div>
+    </div>
+    <div id="additionalInputs" style="display: none;">
+      <h3>Додаткові дані:</h3>
+      <label for="cdi">CDI:</label>
+      <input type="text" id="cdi"><br>
+    
+      <label for="mmi">MMI:</label>
+      <input type="text" id="mmi"><br>
+    
+      <label for="sig">SIG:</label>
+      <input type="text" id="sig"><br>
+    
+      <label for="net">NET:</label>
+      <input type="text" id="net"><br>
+    
+      <label for="nst">NST:</label>
+      <input type="text" id="nst"><br>
+    
+      <label for="dmin">DMIN:</label>
+      <input type="text" id="dmin"><br>
+    
+      <label for="gap">GAP:</label>
+      <input type="text" id="gap"><br>
+    
+      <label for="magType">MagType:</label>
+      <input type="text" id="magType"><br>
+    
+      <label for="depth">Depth:</label>
+      <input type="text" id="depth"><br>
+    </div>
+  <script>
+  function collectFormData() {
+    var latitude = document.getElementById("latitudeInput").value;
+    var longitude = document.getElementById("longitudeInput").value;
+    var radius = document.getElementById("radiusInput").value;
+    var cdi = document.getElementById("cdi").value;
+    var mmi = document.getElementById("mmi").value;
+    var sig = document.getElementById("sig").value;
+    var net = document.getElementById("net").value;
+    var nst = document.getElementById("nst").value;
+    var dmin = document.getElementById("dmin").value;
+    var gap = document.getElementById("gap").value;
+    var magType = document.getElementById("magType").value;
+    var depth = document.getElementById("depth").value;
+
+    var data = {
+      latitude: latitude,
+      longitude: longitude,
+      radius: radius,
+      cdi: cdi,
+      mmi: mmi,
+      sig: sig,
+      net: net,
+      nst: nst,
+      dmin: dmin,
+      gap: gap,
+      magType: magType,
+      depth: depth
+    };
+
+    // Надіслати дані на сервер (реалізуйте цю частину залежно від вашого серверного середовища)
+    Send_data(data);
+    var inputField = document.getElementById('countrySelect');
+    var inputField1 = document.getElementById('latitudeInput');
+    var inputField2 = document.getElementById('longitudeInput');
+    var inputField3 = document.getElementById('radiusInput');
+    // Встановлюємо поле введення як неактивне
+    inputField.disabled = true;
+    inputField1.disabled = true;
+    inputField2.disabled = true;
+    inputField3.disabled = true;
+  }
+  </script>
+    <script>
+      function displayMarkers()
+      {
+      var markers = [
+        { latitude: 2.69, longitude: 98.92, name: "Indonesia", info: "Station: Prapat" },
+        { latitude: 18.79, longitude: 98.9769, name: "Thailand", info: "Station: Chiang Mai"},
+        { latitude: 19.0294, longitude: 109.8433, name: "China", info: "Station: Qeongzhong, Guangduong Province"},
+        { latitude: -20.08833, longitude: 146.2544, name: "Australia", info: "Station: Charters Towers"},
+        { latitude: 30.2718, longitude: 109.4868, name: "China", info: "Station: Enshi, Hubei Province"},
+        { latitude: 34.0313, longitude: 108.92370, name: "China", info: "Station: Xi'an"},
+        { latitude: 8.53000, longitude: 179.20000, name: "Chief Director", info: "Director: Ms. Hila Vavae"},
+        { latitude: -21.2125, longitude: -159.7733, name: "Cook Islands", info: "Station: Raratonga" },
+        { latitude: 2.0485, longitude: -157.44532, name: "Kiribati", info: "Station: Kiritimati (Christmas Island)"},
+        { latitude: -21.15900, longitude: 119.73120, name: "Western Australia", info: "Station: Marble Bar"},
+        { latitude: 19.75750, longitude: -155.53250, name: "Hawaii, USA", info: "Station: Pohakuloa" },
+        { latitude: -9.4092, longitude: 147.1539, name: "New Guinea", info: "Station: Port Moresby Papua"},
+        { latitude: -41.3101, longitude: 174.7046, name: "New Zealand", info: "Station: South Karori"},
+        { latitude: -29.25170, longitude: -177.91830, name: "Kermadec Islands", info: "Station: Raoul"},
+        { latitude: 33.0261, longitude: 130.1758, name: "Japan", info: "Station: Tara-eki"},
+        { latitude: 16.73290, longitude: -169.52920, name: "USA", info: "Station: Johnston Island"},
+        { latitude: 19.2953, longitude: 166.6311, name: "USA", info: "Station: WAKE ISLAND"},
+        { latitude: 13.5878, longitude: 144.8663, name: "Mariana Islands", info: "Station: Guam"},
+        { latitude: 7.0878, longitude: 125.5747, name: "Philippines", info: "Station: Davao"},
+        { latitude: -9.4322, longitude: 159.9471, name: "Solomon Islands", info: "Station: Honiara"},
+        { latitude: 31.0956, longitude: 121.1867, name: "China", info: "Station: Sheshan, Shanghai, China"},
+        { latitude: 30.2718, longitude: 109.4868, name: "China", info: "Station: Enshi, Hubei Province"},
+        { latitude: 44.6164, longitude: 129.5919, name: "China", info: "Station: Mudanjiang, Heilongjiang Province"},
+        { latitude: 47.8652, longitude: 107.0528, name: "Mongolia", info: "Station: Ulaanbaatar"},
+        { latitude: 40.0403, longitude: 116.1750, name: "China", info: "Station: Baijiatuan, Beijing"},
+        { latitude: 36.5425, longitude: 138.2073, name: "Solomon Islands", info: "Station: Matsushiro"},
+        { latitude: 24.9754, longitude: 121.4881, name: "Taiwan", info: "Station: Taipei"},
+      ];
+      
+      var map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 40, lng: 140 },
+        zoom: 5
+      });
+      
+      var infoWindow;
+      
+      for (var i = 0; i < markers.length; i++) {
+        var marker = new google.maps.Marker({
+          position: { lat: markers[i].latitude, lng: markers[i].longitude },
+          map: map,
+          title: markers[i].name,
+          info: markers[i].info // Додано властивість info до маркера
+        });
+        
+        // Додати слухач подій наведення курсора миші на маркер
+        marker.addListener('mouseover', function() {
+          infoWindow = new google.maps.InfoWindow({
+            content: this.info
+          });
+          infoWindow.open(map, this);
+        });
+        
+        // Додати слухач подій забирання курсора миші з маркера
+        marker.addListener('mouseout', function() {
+          setTimeout(function() {
+            infoWindow.close();
+          }, 1300); 
+        });
+      }
+    }
+
+        function showSecondButton() {
+            const secondButton = document.getElementById('secondButton');
+            const buttonContainer = document.createElement('div');
+            const thirdButton = document.getElementById('form');
+            buttonContainer.className = 'buttonContainer';
+            const resultInput = document.getElementById('result');
+            resultInput.value = '';
+            // Знаходимо батьківський елемент першої кнопки
+            const firstButton = document.querySelector('.firstButton');
+            const parentElement = firstButton.parentNode;
+
+            // Змінюємо стиль кнопки, щоб зробити її видимою
+            thirdButton.style.display = 'block';
+            // Додаємо контейнер та переміщуємо кнопки в нього
+            parentElement.insertBefore(buttonContainer, firstButton);
+            buttonContainer.appendChild(firstButton);
+            buttonContainer.appendChild(thirdButton);
+        }
+      </script>
+<script>
+  var markers = [
+      { latitude: 2.69, longitude: 98.92, name: "Indonesia", info: "Station: Prapat" },
+      { latitude: 18.79, longitude: 98.9769, name: "Thailand", info: "Station: Chiang Mai"},
+      { latitude: 19.0294, longitude: 109.8433, name: "China", info: "Station: Qeongzhong, Guangduong Province"},
+      { latitude: -20.08833, longitude: 146.2544, name: "Australia", info: "Station: Charters Towers"},
+      { latitude: 30.2718, longitude: 109.4868, name: "China", info: "Station: Enshi, Hubei Province"},
+      { latitude: 34.0313, longitude: 108.92370, name: "China", info: "Station: Xi'an"},
+      { latitude: 8.53000, longitude: 179.20000, name: "Chief Director", info: "Director: Ms. Hila Vavae"},
+      { latitude: -21.2125, longitude: -159.7733, name: "Cook Islands", info: "Station: Raratonga" },
+      { latitude: 2.0485, longitude: -157.44532, name: "Kiribati", info: "Station: Kiritimati (Christmas Island)"},
+      { latitude: -21.15900, longitude: 119.73120, name: "Western Australia", info: "Station: Marble Bar"},
+      { latitude: 19.75750, longitude: -155.53250, name: "Hawaii, USA", info: "Station: Pohakuloa" },
+      { latitude: -9.4092, longitude: 147.1539, name: "New Guinea", info: "Station: Port Moresby Papua"},
+      { latitude: -41.3101, longitude: 174.7046, name: "New Zealand", info: "Station: South Karori"},
+      { latitude: -29.25170, longitude: -177.91830, name: "Kermadec Islands", info: "Station: Raoul"},
+      { latitude: 33.0261, longitude: 130.1758, name: "Japan", info: "Station: Tara-eki"},
+      { latitude: 16.73290, longitude: -169.52920, name: "USA", info: "Station: Johnston Island"},
+      { latitude: 19.2953, longitude: 166.6311, name: "USA", info: "Station: WAKE ISLAND"},
+      { latitude: 13.5878, longitude: 144.8663, name: "Mariana Islands", info: "Station: Guam"},
+      { latitude: 7.0878, longitude: 125.5747, name: "Philippines", info: "Station: Davao"},
+      { latitude: -9.4322, longitude: 159.9471, name: "Solomon Islands", info: "Station: Honiara"},
+      { latitude: 31.0956, longitude: 121.1867, name: "China", info: "Station: Sheshan, Shanghai, China"},
+      { latitude: 30.2718, longitude: 109.4868, name: "China", info: "Station: Enshi, Hubei Province"},
+      { latitude: 44.6164, longitude: 129.5919, name: "China", info: "Station: Mudanjiang, Heilongjiang Province"},
+      { latitude: 47.8652, longitude: 107.0528, name: "Mongolia", info: "Station: Ulaanbaatar"},
+      { latitude: 40.0403, longitude: 116.1750, name: "China", info: "Station: Baijiatuan, Beijing"},
+      { latitude: 36.5425, longitude: 138.2073, name: "Solomon Islands", info: "Station: Matsushiro"},
+      { latitude: 24.9754, longitude: 121.4881, name: "Taiwan", info: "Station: Taipei"},
+  ];
+
+  function getDistance(lat1, lon1, lat2, lon2) {
+      var R = 6371; // Радіус Землі в кілометрах
+      var dLat = deg2rad(lat2 - lat1);
+      var dLon = deg2rad(lon2 - lon1);
+      var a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      var distance = R * c;
+      return distance;
+  }
+
+  function deg2rad(deg) {
+      return deg * (Math.PI / 180);
+  }
+
+  function findClosestStation() {
+      // Отримуємо значення введених користувачем координат
+      var userLatitude = parseFloat(document.getElementById("latitudeInput").value);
+      var userLongitude = parseFloat(document.getElementById("longitudeInput").value);
+
+      // Знаходимо найближчу станцію
+      var closestStation = null;
+      var closestDistance = Infinity;
+
+      for (var i = 0; i < markers.length; i++) {
+        var marker = markers[i];
+        var stationLatitude = marker.latitude;
+        var stationLongitude = marker.longitude;
+
+        var distance = getDistance(userLatitude, userLongitude, stationLatitude, stationLongitude);
+
+        if (distance < closestDistance) {
+          closestStation = marker;
+          closestDistance = distance;
+        }
+      }
+
+      // Побудова прямої лінії між точкою користувача і найближчою станцією
+      var lineCoordinates = [
+        { lat: userLatitude, lng: userLongitude },
+        { lat: closestStation.latitude, lng: closestStation.longitude }
+      ];
+
+      // Відображення маркерів та лінії на карті
+      var map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: userLatitude, lng: userLongitude },
+        zoom: 10
+      });
+
+      var userMarker = new google.maps.Marker({
+        position: { lat: userLatitude, lng: userLongitude },
+        map: map,
+        title: "Ваша точка"
+      });
+
+      var stationMarker = new google.maps.Marker({
+        position: { lat: closestStation.latitude, lng: closestStation.longitude },
+        map: map,
+        title: closestStation.name
+      });
+
+      var line = new google.maps.Polyline({
+        path: lineCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+      });
+
+      line.setMap(map);
+
+      // Виведення інформації про найближчу станцію
+      var stationInfo = document.getElementById("station-info");
+      stationInfo.innerHTML = "<b>" + closestStation.name + "</b><br>" + closestStation.info;
+      document.getElementById("additionalInputs").style.display = "block";
+    }
+</script>
+
+<script>
+  function Send_data(data)
+  {
+  var mark = [
+    { latitude: 39.0, longitude: -123.0, name: "Santa Rosa, CA", info: "cdi:4, mmi:7, sig:645, net:7, nst:55, dmin:0.07, gap:39, magType:2.46, depth:7.08" },
+    { latitude: 22.0, longitude: -76.0, name: "Cuba region", info: "cdi:7, mmi:4, sig:341, net:7, nst:89, dmin:1.808, gap:101, magType:4.2, depth:10" },
+    { latitude: 29.0, longitude: -88.0, name: "Gulf of Mexico", info: "cdi:8, mmi:5, sig:765, net:8, nst:50, dmin:2.755, gap:131, magType:3.3, depth:5" },
+    { latitude: 59.0, longitude: -149.0, name: "Lowell Point, Alaska", info: "cdi:6, mmi:7, sig:768, net:9, nst:0, dmin:0, gap:0, magType:2.5, depth:4.6" },
+    { latitude: -62.0, longitude: 156.0, name: "Balleny Islands region", info: "cdi:0, mmi:9, sig:324, net:3, nst:56, dmin:15.408, gap:102, magType:5.8, depth:10" },
+    { latitude: 39.0, longitude: 142.0, name: "Onagawa Chō, Japan", info: "cdi:0, mmi:4, sig:175, net:5, nst:62, dmin:2.53, gap:133, magType:4.4, depth:39.148" },
+    { latitude: 13.0, longitude: 96.0, name: "Andaman Islands, India region", info: "cdi:2, mmi:5, sig:742, net:6, nst:35, dmin:3.865, gap:105, magType:4.6, depth:10" },
+    { latitude: 13.0, longitude: 48.0, name: "Las Khorey, Somalia", info: "cdi:4, mmi:6, sig:456, net:7, nst:90, dmin:5.08, gap:96, magType:4.6, depth:10" },
+    { latitude: 14.0, longitude: 145.0, name: "Guam region", info: "cdi:5, mmi:7, sig:763, net:8, nst:43, dmin:1.807, gap:85, magType:4.5, depth:138.689" },
+    { latitude: -57.0, longitude: 148.0, name: "Macquarie Island", info: "cdi:7, mmi:8, sig:124, net:4, nst:74, dmin:13.824, gap:48, magType:5.3, depth:10" },
+    { latitude: 19.0, longitude: -65.0, name: "Charlotte Amalie, U.S. Virgin Islands", info: "cdi:8, mmi:4, sig:325, net:9, nst:17, dmin:0.3461, gap:247, magType:3.42, depth:20.18" },
+    { latitude: 20.0, longitude: -66.0, name: "Suárez, Puerto Rico", info: "cdi:8, mmi:8, sig:252, net:9, nst:11, dmin:1.4319, gap:250, magType:3.76, depth:16" },
+    { latitude: 19.0, longitude: -67.0, name: "San Antonio, Puerto Rico", info: "cdi:7, mmi:9, sig:256, net:9, nst:13, dmin:0.3861, gap:278, magType:3.35, depth:9.88" },
+    { latitude: 19.0, longitude: -65.0, name: "Culebra, Puerto Rico", info: "cdi:9, mmi:4, sig:745, net:5, nst:11, dmin:0.8411, gap:266, magType:3.23, depth:24.63" },
+    { latitude: 25.0, longitude: 128.0, name: "Ryukyu Islands, Japan", info: "cdi:9, mmi:5, sig:723, net:4, nst:33, dmin:1.619, gap:95, magType:5, depth:10" },
+    { latitude: 38.0, longitude: 94.0, name: "Dunhuang, China", info: "cdi:2, mmi:6, sig:654, net:3, nst:51, dmin:8.339, gap:72, magType:4.4, depth:10" },
+    { latitude: 19.0, longitude: -74.0, name: "Les Abricots, Haiti", info: "cdi:3, mmi:7, sig:547, net:5, nst:28, dmin:1.511, gap:73, magType:4.1, depth:10" },
+    { latitude: 39.0, longitude: -120.0, name: "Walker, CA", info: "cdi:7, mmi:5, sig:963, net:7, nst:6, dmin:0.1218, gap:110, magType:2. depth:2.32" },
+    { latitude: -21.0, longitude: -69.0, name: "Marker 18", info: "cdi:8, mmi:7, sig:235, net:2, nst:10, dmin:0.363, gap:118, magType:4.2, depth:113.72" },
+    { latitude: 34.0, longitude: -120.0, name: "Marker 19", info: "cdi:3, mmi:9, sig:854, net:4, nst:40, dmin:0.1945, gap:122, magType:3.3, depth:1" },
+    { latitude: 56.0, longitude: -158.0, name: "Marker 20", info: "cdi:5, mmi:4, sig:722, net:4, nst:0, dmin:0, gap:0, magType:2.5, depth:28.1" },
+    { latitude: 2.0, longitude: 126.0, name: "Marker 21", info: "cdi:5, mmi:5, sig:566, net:7, nst:85, dmin:1.933, gap:75, magType:5.8, depth:104" },
+    { latitude: 37.0, longitude: 142.0, name: "Marker 22", info: "cdi:7, mmi:7, sig:786, net:7, nst:46, dmin:3.342, gap:138, magType:4.4, depth:35" },
+    { latitude: 39.0, longitude: -97.0, name: "Marker 23", info: "cdi:1, mmi:5, sig:458, net:9, nst:35, dmin:0.703, gap:94, magType:4.6, depth:4.02" },
+    { latitude: -8.0, longitude: 108.0, name: "Marker 24", info: "cdi:6, mmi:8, sig:834, net:8, nst:22, dmin:0.839, gap:121, magType:4.6, depth:42.908" },
+    { latitude: 19.0, longitude: -65.0, name: "Marker 25", info: "cdi:8, mmi:9, sig:981, net:9, nst:19, dmin:0.6955, gap:270, magType:4.5, depth:24.61" },
+    { latitude: 20.0, longitude: -66.0, name: "Marker 26", info: "cdi:0, mmi:2, sig:237, net:4, nst:9, dmin:1.471, gap:307, magType:5.3, depth:38.19" },
+    { latitude: -25.0, longitude: 180.0, name: "Marker 27", info: "cdi:0, mmi:4, sig:864, net:1, nst:48, dmin:4.585, gap:54, magType:3.42, depth:490.18" },
+    { latitude: -5.0, longitude: 152.0, name: "Marker 28", info: "cdi:4, mmi:4, sig:237, net:5, nst:24, dmin:1.106, gap:66, magType:3.76, depth:124.549" },
+    { latitude: 1.0, longitude: 120.0, name: "Marker 29", info: "cdi:0, mmi:3, sig:864, net:2, nst:33, dmin:0.873, gap:96, magType:3.35, depth:560.69" },
+    { latitude: 36.0, longitude: 83.0, name: "Marker 30", info: "cdi:0, mmi:1, sig:234, net:7, nst:16, dmin:0.1056, gap:106, magType:3.23, depth:2.9" },
+  ];
+        event.preventDefault();
+        if (latitudeInput.value === '' || longitudeInput.value === '' || radiusInput.value === '') 
+          {
+           alert('Будь ласка, заповніть всі поля.');
+           return;
+        }
+
+        const url = 'http://127.0.0.1:5000/predict';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log(data.prediction)
+            var inputString = data.prediction
+            var numbers = inputString.replace('[', '').replace(']', '').split(' ');
+            var secondElement = parseFloat(numbers[1]);
+            var percentage = (secondElement * 100).toFixed(0) + '%';
+            
+            
+            var inputelement = document.getElementById("result")
+            inputelement.value = percentage
+          }
+            )
+          .catch(error => console.error('Error:', error));
+      
+    }
+  </script>
+
+    <label>передбачення: </label>
+    <input type="text" id="result"> </input>
+    <script>
+      // Отримуємо посилання на елемент <input>
+      var inputField = document.getElementById('result');
+    
+      // Встановлюємо поле введення як неактивне
+      inputField.disabled = true;
+    </script>
+  </body>
+</html>
